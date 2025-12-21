@@ -32,7 +32,7 @@ public class DeviceServiceTests {
     private DeviceService deviceService;
 
     @Test
-    public void registerDeviceShouldThrowInvalidSerialNumberException() {
+    public void registerDevice_shouldThrowInvalidSerialNumberException() {
         when(passportService.findPassportBySerialId("1234")).thenThrow(new CustomException("Passport not found for serial number: 1234", ErrorCode.Failed));
 
         CustomException ex = assertThrows(

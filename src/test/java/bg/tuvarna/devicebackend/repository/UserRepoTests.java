@@ -8,10 +8,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -21,14 +23,32 @@ class UserRepoTests {
 
     @BeforeEach
     void setUp() {
-        User user = User.builder()
+        User user1 = User.builder()
+                .fullName("losho")
+                .email("losho@abv.bg")
+                .phone("0888123457")
+                .role(UserRole.ADMIN)
+                .build();
+
+        userRepository.save(user1);
+
+        User user2 = User.builder()
+                .fullName("mosho")
+                .email("mosho@abv.bg")
+                .phone("0888123458")
+                .role(UserRole.USER)
+                .build();
+
+        userRepository.save(user2);
+
+        User user3 = User.builder()
                 .fullName("gosho")
                 .email("gosho@abv.bg")
                 .phone("0888123456")
                 .role(UserRole.USER)
                 .build();
 
-        userRepository.save(user);
+        userRepository.save(user3);
     }
 
     @AfterEach
@@ -37,17 +57,15 @@ class UserRepoTests {
     }
 
     @Test
-    void userFindBySearchName() {
-        User user = userRepository
-                .searchBy("gosho", Pageable.ofSize(1))
-                .getContent()
-                .getFirst();
-        assertEquals("0888123456", user.getPhone());
-    }
+    void getAllUsersWithoutAdmins() {
+        Page<User> usersPage = userRepository.getAllUsers(PageRequest.of(0, 10));
 
-    @Test
-    void userFindBySearchPhone() {
-        User user = userRepository.searchBy("0888123456", Pageable.ofSize(1)).getContent().getFirst();
-        assertEquals("gosho", user.getFullName());
+        assertAll(
+                () -> assertEquals(2, usersPage.getTotalElements()),
+                () -> assertTrue(
+                        usersPage.stream()
+                                .allMatch(u -> UserRole.USER.equals(u.getRole()))
+                )
+        );
     }
 }
